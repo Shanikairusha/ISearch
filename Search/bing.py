@@ -7,6 +7,8 @@ from typing import List, Dict
 import bs4
 import requests
 
+url_list=[]
+
 __name__ = 'Bing'
 loc_dict = {"U.A.E": "ae", "Albania": "al",
             "Armenia": "am", "Argentina": "ar",
@@ -161,6 +163,7 @@ class Search:
         :param num: Amount of results to fetch
         :param kwargs: Additional parameters to pass to the BingUrl API
         """
+        self.file_read('domain.txt')
         self.query = query
         if proxy:
             self.proxy_dict = {'https': proxy}
@@ -193,11 +196,21 @@ class Search:
         except requests.ConnectionError:
             logging.exception('No internet', exc_info=False)
             raise NoInternetError('No internet connection detected')
+    def file_read(self,fname):
+        #self.fname = fname
+        with open(fname,'r') as myfiles:
+            for one_line in myfiles:
+                url_list.append(one_line)
+                print(url_list)
+
+
+
 
     def parse_source(self) -> None:
         """
         Parse a html page extracting titles, texts and links
         """
+
         parser = bs4.BeautifulSoup(self.data.text, 'lxml')
         for each in parser.find('ol').findAll('li', {'class': 'b_algo'}):
             try:
@@ -220,6 +233,7 @@ class Search:
                     date_str = date.text.replace('-', ' ').replace('/', ' ')
                     date.decompose()
                 text = each.find('ul', {'class': 'b_vList'}).text.lstrip(" · ")
+
             self.results.append({'rank': str(self.rank), 'title': title, "link": link, 'text': text,
                                  'time': date_str})
             self.rank += 1
