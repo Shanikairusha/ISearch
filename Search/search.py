@@ -7,9 +7,9 @@ from typing import List, Dict
 import bs4
 import requests
 
-url_list=[]
 
-__name__ = 'Bing'
+url_list = []
+__name__ = 'Search'
 loc_dict = {"U.A.E": "ae", "Albania": "al",
             "Armenia": "am", "Argentina": "ar",
             "Austria": "at", "Australia": "au",
@@ -80,11 +80,15 @@ class NoInternetError(ConnectionError):
 class NoResultsError(Exception):
     pass
 
+class ExhaustedResultsError(Exception):
+    pass
 
-class BingUrl:
+
+
+class CrawlUrl:
     def __init__(self, query, page=1, safe_search=1, **kwargs):
         """
-        Class for constructing a  Bing url
+        Class for constructing a  Esearch url
         """
         self.query = query
         self.page = page
@@ -161,9 +165,8 @@ class Search:
         """
         :param query: Search term
         :param num: Amount of results to fetch
-        :param kwargs: Additional parameters to pass to the BingUrl API
+        :param kwargs: Additional parameters to pass to the CrawlUrl API
         """
-        self.file_read('domain.txt')
         self.query = query
         if proxy:
             self.proxy_dict = {'https': proxy}
@@ -171,7 +174,7 @@ class Search:
             self.proxy_dict = {}
         self.num = num if num <= 50 else 10
         logging.debug(f'Set num to be {self.num}')
-        self.bing_url = BingUrl(self.query, count=self.num, **kwargs)
+        self.bing_url = CrawlUrl(self.query, count=self.num, **kwargs)
         self.url = self.bing_url.url
         self.headers = {'User-Agent':
                             'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36  (KHTML, like Gecko) '
@@ -196,20 +199,14 @@ class Search:
         except requests.ConnectionError:
             logging.exception('No internet', exc_info=False)
             raise NoInternetError('No internet connection detected')
-    def file_read(self,fname):
-        #self.fname = fname
-        with open(fname,'r') as myfiles:
-            for one_line in myfiles:
-                url_list.append(one_line)
-                print(url_list)
-
-
-
 
     def parse_source(self) -> None:
         """
         Parse a html page extracting titles, texts and links
         """
+        with open("domain.txt",'r') as urls:
+            for url in urls:
+                url_list.append(url)
 
         parser = bs4.BeautifulSoup(self.data.text, 'lxml')
         for each in parser.find('ol').findAll('li', {'class': 'b_algo'}):
@@ -234,9 +231,14 @@ class Search:
                     date.decompose()
                 text = each.find('ul', {'class': 'b_vList'}).text.lstrip(" · ")
 
-            self.results.append({'rank': str(self.rank), 'title': title, "link": link, 'text': text,
-                                 'time': date_str})
-            self.rank += 1
+            for i in url_list:
+                #print(i)
+                i = i.strip()
+                if i in link:
+                    # print(i+" "+link)
+                    self.results.append({'rank': str(self.rank), 'title': title, "link": link, 'text': text,
+                                        'time': date_str})
+                    self.rank += 1
         self.listify()
         if not self.listy:
             raise NoResultsError("No results")
@@ -298,7 +300,7 @@ class Search:
         """
         Function to fetch the next raw web page of a result and parse it
         """
-        self.bing_url = BingUrl(self.query, page=self.bing_url.page + 1)
+        self.bing_url = CrawlUrl(self.query, page=self.bing_url.page + 1)
         self.url = self.bing_url.url
         self.get()
         self.parse_source()

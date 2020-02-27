@@ -6,8 +6,6 @@ Command line interface for Groove
 import multiprocessing as mp
 import os
 
-import Search.DuckDuckGo.duck as duck
-import Search.Google.google as google
 
 if os.name == "posix":
     class Colors:
@@ -154,8 +152,8 @@ def generate_cmd_output(opt, query):
     :param query: Query to search
     """
     modules = {
-        "google": google,
-        "duck": duck
+        # "google": google,
+        # "duck": duck
     }
     every_thing = ""
     data = modules.get(opt).Search(query).parse_source()

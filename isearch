@@ -23,19 +23,16 @@ except ImportError:
     import xml.etree.ElementTree as etree
 
 from util.scroll import ScrollBar, Scrollable
-import Search.bing as bing
-import Search.duck as duck
-import Search.google as google
+import Search.search as search
+
 import Search.google_scholar as scholar
 
 # ADDITIONS: Search engine module
 engines = {
-    'google': google,
-    "duck": duck,
-    'bing': bing,
+    'search': search,
     'g-scholar': scholar
 }
-GIT = 'https://www.github.com/steve-tyler/ISearch.git'
+GIT = 'https://github.com/Shanikairusha/Focused-web-crawler'
 
 ENCODING = sys.getfilesystemencoding()
 # Warn if encoding is something we've never seen
@@ -59,7 +56,7 @@ class Cmd:
     def __init__(self, query: str, engine, pprint_json=False, duck_api=False,
                  pprint_xml=False, colours=True, **kwargs):
         """
-        ISearch cmd class
+        Fcrawler cmd class
         """
         self.kwargs = kwargs
         self.engine = engines.get(engine)
@@ -169,12 +166,12 @@ class Cmd:
         print(etree.tostring(xml_p, pretty_print=True, xml_declaration=True, encoding='utf-8').decode('utf-8'))
 
 
-progress_bar = urwid.ProgressBar('a', 'b')
+# progress_bar = urwid.ProgressBar('a', 'b')
 
 
 class InteractiveCmd:
     def __init__(self):
-        global progress_bar
+        # global progress_bar
         self.palette = (
             ('titlebar', 'dark red,bold,underline', 'black'),
             ('quit', 'light red,bold,underline', 'black'),
@@ -184,25 +181,21 @@ class InteractiveCmd:
 
             ('query', 'bold', 'black'),
 
-            ('google', 'light red,bold', ''),
-            ('duck', 'light green,bold', ''),
-            ('bing', 'light blue,bold', ''),
+
+            ('search', 'light blue,bold', ''),
             ('scholar', 'light magenta,bold', ''),
 
             ('title', 'light red, bold', ''),
             ('link', 'light blue,underline', ''),
 
-            ('download_title', 'light green, bold,underline', ''),
-            ('download_edt', 'bold', ''),
-            ('download_btn', 'dark magenta,bold', ''),
-            ('color', 'light green,bold', ''),
+
 
             ('time', 'light green', ''),
             ('pdf_link', 'yellow', ''),
             ('result_info', 'brown', '')
         )
         # Header
-        self.header = urwid.Text(('titlebar', u'ISearch\u26A1'), align='center')
+        self.header = urwid.Text(('titlebar', u'Focus Crawler'), align='center')
 
         # Body
         self.result_bar = urwid.Text(u"Input a query and press enter.\nResults will be displayed \u2193 "
@@ -214,53 +207,36 @@ class InteractiveCmd:
 
         # ADDITIONS: Search engine options
         opt_grp = []
-        self.google_opt = urwid.RadioButton(opt_grp, 'Google', on_state_change=self.det_search_module, user_data=None)
-        google_opt = urwid.AttrMap(self.google_opt, 'google')
-        self.bing_opt = urwid.RadioButton(opt_grp, 'Bing', on_state_change=self.det_search_module, user_data=None)
-        bing_opt = urwid.AttrMap(self.bing_opt, 'bing')
-        self.duck_opt = urwid.RadioButton(opt_grp, 'DuckDuckGo', state=True, on_state_change=self.det_search_module,
-                                          user_data=None)
 
-        duck_opt = urwid.AttrMap(self.duck_opt, 'duck')
+        self.esearch_opt = urwid.RadioButton(opt_grp, 'search', on_state_change=self.det_search_module, user_data=None)
+        esearch_opt = urwid.AttrMap(self.esearch_opt, 'search')
+
+
+
         self.scholar_opt = urwid.RadioButton(opt_grp, 'Google Scholar',
                                              on_state_change=self.det_search_module,
                                              user_data=None)
         scholar_opt = urwid.AttrMap(self.scholar_opt, 'scholar')
-        opt = urwid.GridFlow([bing_opt, duck_opt, google_opt, scholar_opt], 20, 4, 1, align='center')
+        opt = urwid.GridFlow([esearch_opt,   scholar_opt], 20, 4, 1, align='center')
 
         # Next button
         next_btn = urwid.GridFlow([urwid.Button('Next', on_press=self.next)], 8, 0, 0, align='center')
         # Previous button
         prev_btn = urwid.GridFlow([urwid.Button('Previous', on_press=self.previous)], 12, 0, 0, align='center')
-        # Download options
-        download_title = urwid.Text(('download_title', "Download a File [F8]"), align='center')
-        self.download_url = urwid.Edit("URL >> ")
-        # Save the file in Downloads directory. unless explicitly told otherwise.
-        self.download_path = urwid.Edit('Path >>', edit_text=os.environ['HOME'] + "/Downloads")
-        download_btn = urwid.Button("Download", on_press=self.download_thread)
 
-        download_opt = urwid.LineBox(
-            urwid.Pile([download_title,
-                        urwid.AttrMap(self.download_url, 'download_edt'),
-                        urwid.Divider(),
-                        urwid.AttrMap(self.download_path, 'download_edt'),
-                        urwid.Divider(),
-                        urwid.AttrMap(urwid.GridFlow([download_btn], 13, 0, 0, align='center'), 'download_btn')
-                        ])
-        )
         btn_pile = urwid.Pile([prev_btn, urwid.Divider(), next_btn])
         self.info_bar = urwid.Text('')
 
         body = urwid.Columns([('weight', 5, self.line_box),
-                              urwid.Pile([urwid.LineBox(opt, title='Search Engines'),
+                              urwid.Pile([urwid.LineBox(opt, title='Search Method'),
                                           urwid.Divider(),
                                           urwid.LineBox(btn_pile),
                                           urwid.Divider(),
-                                          download_opt,
+
                                           urwid.Divider(),
                                           urwid.LineBox(self.info_bar, title='Info bar'),
                                           urwid.Divider(),
-                                          urwid.LineBox(progress_bar, title='Progress bar')
+                                          # urwid.LineBox(progress_bar, title='Progress bar')
                                           ])
                               ])
 
@@ -283,63 +259,6 @@ class InteractiveCmd:
                                  footer=footer_pile,
                                  focus_part='footer')
 
-    def download_thread(self, *args):
-        """Start a thread to download a file"""
-        self.thread = threading.Thread(target=self.download_file)
-        self.thread.daemon = False
-        self.thread.start()
-
-    def download_file(self, *args):
-        """Download a file from the internet"""
-        global loop, progress_bar
-        if not self.download_url.get_edit_text().strip(""):
-            self.info_bar.set_text(('alert', "ERROR:No url provided"))
-        else:
-            url = self.download_url.get_edit_text()
-            try:
-                # Stream the data we don't want adding a 500 mb file to memory.
-                data = requests.get(url, stream=True)
-                # Raise an error if the status code lies above 400
-                data.raise_for_status()
-            except Exception as e:
-                self.info_bar.set_text(('alert', e.__str__()))
-            else:
-                _path = self.download_path.get_edit_text()
-                try:
-                    # Create a file and then close, like the touch program
-                    open(_path, mode='x').close()
-                except IsADirectoryError:
-                    # IF the path ends with / it becomes a directory.
-                    os.makedirs(_path, exist_ok=True)
-                except (FileExistsError, FileNotFoundError) as e:
-                    self.info_bar.set_text(('alert', e.__str__()))
-                if os.path.isfile(_path):
-                    path = _path
-                elif os.path.isdir(_path):
-                    # Get the filename from the last part url or if no filename set it to index.html
-                    # BUG: Sometimes it may save the file using the ip address
-                    filename = urllib.parse.urlsplit(self.download_url.get_edit_text()).path.rsplit("/")[-1:][0] \
-                               or "index.html"
-                    path = _path + "/" + filename
-                else:
-                    raise DownloadException("Path is malformed")
-                self.info_bar.set_text(("color", 'Downloading from {}'.format(url)))
-                try:
-                    size = int(data.headers.get('Content-Length') or len(data.content))
-                    download = 0
-                    with open(path, "wb") as wfile:
-                        # Chunk everything in 10 mb files
-                        for chunk in data.iter_content(10485760):
-                            download += 10485760
-                            rem = download // size
-                            progress_bar.set_completion(rem)
-                            loop.draw_screen()
-                            wfile.write(chunk)
-                    progress_bar.set_completion(100)
-                except Exception as e:
-                    self.result_bar.set_text(('alert', e.__str__()))
-                else:
-                    self.info_bar.set_text(("color", 'File saved at {}'.format(path)))
 
     def previous(self, *args):
         """Fetch previous results"""
@@ -401,15 +320,13 @@ class InteractiveCmd:
         By checking, which radiobutton state has been set
         to True.
         """
-        if self.google_opt.state:
-            self.search_m = google
-        elif self.bing_opt.state:
-            self.search_m = bing
-        elif self.duck_opt.state:
-            self.search_m = duck
+
+        if self.esearch_opt.state:
+            self.search_m = search
+
         elif self.scholar_opt.state:
             self.search_m = scholar
-        # ADDITIONS:Search engine state
+
 
     def search(self, *args):
         """
@@ -432,7 +349,7 @@ class InteractiveCmd:
                                           ('', "Check out https://api.duckduckgo.com/bang for more info")])
             else:
                 # Normal request
-                self.line_box.set_title(self.search_m.__name__ + " results for '{query}'".format(query=query))
+                self.line_box.set_title( "E-Learning results for '{query}'".format(query=query))
                 try:
                     self.searcher = self.search_m.Search(query)
                     for items in self.searcher.next():
@@ -470,15 +387,11 @@ class InteractiveCmd:
             self.search()
         if keypress == 'esc':
             self.exit()
-        if keypress == 'f8':
-            # Shortcut for Download options
-            self.download_thread()
+
         if keypress == 'f1':
             # Show help
             self.show_help()
-        if keypress == 'f4':
-            # Open the project's github page
-            webbrowser.open(GIT)
+
         if keypress == 'f3':
             self.info_bar.set_text('')
 
@@ -486,10 +399,7 @@ class InteractiveCmd:
         help_msg = [
             """
             Press       'F1' to show this help
-            Press       'F3' to clear info bar
-            Press       '""", ("titlebar", "F4"), """' to open the project in github.com.
-            Press       'F8' to download the url present in the Download bar
-            
+            Press       'F3' to clear info bar  
             Press       'ESC' to exit.
             Press       'enter' to perform a search. 
             """
@@ -502,8 +412,8 @@ loop = urwid.MainLoop(interactive.frame, interactive.palette, unhandled_input=in
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='ISearch',
-                                     description="ISearch command line options",
+    parser = argparse.ArgumentParser(prog='search',
+                                     description="FCrawler command line options",
                                      epilog="Submit bugs at {}".format(GIT),
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      allow_abbrev=True
@@ -511,9 +421,9 @@ def main():
     # Debug options
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Enable debugging mode')
-    # ISearch interactive mode
+    # Fcrawler interactive mode
     parser.add_argument("-i", '--interactive', action='store_true',
-                        help='Enter ISearch interactive mode')
+                        help='Enter FCrawler interactive mode')
     # Proxy support
     parser.add_argument("-p", '--proxy', help='Specify proxy to use'
                                               '\nFormat is [<proxy-scheme>://]<proxy-host>[:<proxy-port>'
@@ -523,99 +433,40 @@ def main():
 
     sbp = parser.add_subparsers(dest='s_name', help="", metavar='')
 
-    # Bing sub-options
-    bing_p = sbp.add_parser("bing", description="Bing search in ISearch",
+    # search sub-options
+    esearch_p = sbp.add_parser("search", description="Focoused search in search",
 
-                            help='Bing Search in ISearch\n\n',
+                            help=' Search in search\n\n',
                             formatter_class=argparse.RawTextHelpFormatter,
                             epilog="Submit bugs at {}".format(GIT),
                             allow_abbrev=True
                             )
-    bing_p.add_argument('query', help='Search query')
-    bing_p.add_argument('-d', "--disable-colours", action='store_true',
+    esearch_p.add_argument('query', help='Search query')
+    esearch_p.add_argument('-d', "--disable-colours", action='store_true',
                         help="Disable colour output [only when printing to cmd]\n\n")
-    bing_p.add_argument("-c", dest='tld', metavar='country', help='Top level domain to use\n\n')
-    bing_p.add_argument('-j', '--json', action='store_true', help='Output in json format')
-    bing_p.add_argument('-x', '--xml', action='store_true', help='Output in xml format\n\n')
-    bing_p.add_argument('-l', '--lang', type=str, default='en', help='Language to return results in [default:en]',
+    esearch_p.add_argument("-c", dest='tld', metavar='country', help='Top level domain to use\n\n')
+    esearch_p.add_argument('-j', '--json', action='store_true', help='Output in json format')
+    esearch_p.add_argument('-x', '--xml', action='store_true', help='Output in xml format\n\n')
+    esearch_p.add_argument('-l', '--lang', type=str, default='en', help='Language to return results in [default:en]',
                         metavar='')
-    bing_p.add_argument('-s', '--safe', type=int, choices=[0, 1, 2], default=1, metavar='',
+    esearch_p.add_argument('-s', '--safe', type=int, choices=[0, 1, 2], default=1, metavar='',
                         help='Safe search level\nOptions are:'
                              '\n\t0:No safe search'
                              '\n\t1:Moderate safe search'
                              '\n\t2:Strict safe search\n\n')
-    bing_p.add_argument("-n", '--num', type=int, default=10, help="print 'N' amount of results [from 0-50]",
+    esearch_p.add_argument("-n", '--num', type=int, default=10, help="print 'N' amount of results [from 0-50]",
                         metavar='')
-    bing_p.add_argument('-p', '--page', metavar='', type=int, default=1, help="Fetch results from the n'th page\n\n")
-    bing_p.add_argument('-t', '--time', metavar='span', help='Filer results by age\nFormats are:'
+    esearch_p.add_argument('-p', '--page', metavar='', type=int, default=1, help="Fetch results from the n'th page\n\n")
+    esearch_p.add_argument('-t', '--time', metavar='span', help='Filer results by age\nFormats are:'
                                                              '\n\tDay[results for that day], Month[results from this '
                                                              'month],Year[results from this year]\n '
                                                              '\tOr Dates separated in YYYY-MM-DD...YYYY-MM-DD or '
                                                              '\n\tFor specific dates,use the format YYYY-MM-DD')
-    # DuckDuckGo Options
-    duck_p = sbp.add_parser("duck", description="DuckDuckGo search in ISearch",
-                            help="DuckDuckGo Search in ISearch\n\n",
-                            formatter_class=argparse.RawTextHelpFormatter,
-                            epilog="To perform !bang requests(because they are amazing) add a '\\' before the bang "
-                                   "if weird things happen with just a !\n"
-                                   "This is because bash and zsh have their own !bang implementations\n"
-                                   "(Which are also cool)\n\n"
-                                   "Submit bugs at {}".format(GIT),
-                            allow_abbrev=True
-                            )
-    duck_p.add_argument('query', help='Search query')
-    duck_p.add_argument('-d', "--disable-colours", action='store_true',
-                        help="Disable colour output [ only to when printing to cmd ]\n\n")
-    duck_p.add_argument('-a', '--api', action='store_true',
-                        help='Fetch results from DuckDuckGo api\n'
-                             '(Note do not use this for deep queries, results will be null)\n\n')
-    duck_p.add_argument('-c', metavar='country', dest='country',
-                        help="Region to search from [default wt-wt -'Global']\n\n")
-    duck_p.add_argument('-j', '--json', action='store_true', help='Output in json format')
-    duck_p.add_argument('-x', '--xml', action='store_true', help='Output in xml format\n\n')
-    duck_p.add_argument("-n", '--num', type=int, default=10, help="print 'N' amount of results [range:0-30]\n\n",
-                        metavar=' ')
-    duck_p.add_argument('-p', '--page', type=int, default=1, help="Fetch results from n'th page\n\n", metavar='')
-    duck_p.add_argument('-s', '--safe', metavar='', type=int, choices=[-2, -1, 1],
-                        help='Safe search options valid options are:'
-                             '\n\t 1:On'
-                             '\n\t-1:Moderate [default]'
-                             '\n\t-2:Off')
 
-    # Google sub-options
-    google_p = sbp.add_parser("google", description="Google search in ISearch",
-                              help='Google Search in ISearch\n\n',
-                              formatter_class=argparse.RawTextHelpFormatter, epilog=
-                              "For this to work we, require selenium module, and a chrome-webdriver(if using Chrome)\n"
-                              'Fetch the latest from  http://chromedriver.storage.googleapis.com/index.html\n'
-                              'Chrome/Chromium works faster than Firefox... \n\n'
-                              f"Submit bugs at {GIT}")
 
-    google_p.add_argument("query", help='Search query')
-    google_p.add_argument('-d', "--disable-colours", action='store_true',
-                          help="Disable colour output[only when printing to cmd]\n\n")
-    google_p.add_argument('-c', dest='tld', metavar='country',
-                          help="Country Top level domain to use\n\n")
-    google_p.add_argument('-j', '--json', action='store_true', help='Output in json format')
-    google_p.add_argument('-x', '--xml', action='store_true', help='Output in xml format\n\n')
-    google_p.add_argument('-p', '--page', help="Fetch results from the n'th page", metavar='',
-                          type=int, default=1)
-    google_p.add_argument("-n", '--num', help="Fetch 'N' amount of results [default:10]\n\n",
-                          type=int, default=10, metavar='')
-    google_p.add_argument('-l', '--lang', help="Language to return results in [default:en]\n\n", type=str, default='en',
-                          metavar='')
-    google_p.add_argument('-t', '--time', help='Limit search to files indexed in:'
-                                               '\n\t d:The previous 24 hours'
-                                               '\n\t w:The previous week'
-                                               "\n\t m:The previous month [mn] the previous 'n' number of months"
-                                               '\n\t y:The previous year\n\n', metavar='')
-    google_p.add_argument('-u', '--unfilter', action='store_true', help='Show unfiltered search results')
-    google_p.add_argument('-X', '--exact', action='store_true', help='Disable spelling correction')
-
-    parser.add_argument("-v", "--version", action="version", version=__version__)
     # ADDITIONS: CommandLine Search options
-    scholar_p = sbp.add_parser("g-scholar", description="Google Scholar search in ISearch",
-                               help='Google Scholar Search in ISearch\n\n',
+    scholar_p = sbp.add_parser("g-scholar", description="Google Scholar search in FCrawler",
+                               help='Google Scholar Search in FCrawler\n\n',
                                formatter_class=argparse.RawTextHelpFormatter, epilog='Google Scholar ,Your one '
                                                                                      'stop shop for all nerdy documents\n'
                                                                                      f"Submit bugs at {GIT}")
@@ -649,26 +500,8 @@ def main():
 
         loop.run()
 
-    elif options.s_name == 'google':
-        query = options.query
-        inst_c = Cmd(query, engine=options.s_name, pprint_json=options.json, pprint_xml=options.xml,
-                     colours=not options.disable_colours,
-                     # Other info
-                     country=options.tld, exact=options.exact, num=options.num, page=options.page, hl=options.lang,
-                     as_qdr=options.time, proxy=proxy, filter=options.unfilter
-                     )
-        inst_c.printer()
 
-    elif options.s_name == 'duck':
-        query = options.query
-        inst_c = Cmd(query, engine=options.s_name, pprint_json=options.json, pprint_xml=options.xml,
-                     colours=not options.disable_colours, duck_api=options.api,
-                     # Other options
-                     num=options.num, page=options.page, country=options.country, safesearch=options.safe,
-                     proxy=proxy)
-        inst_c.printer()
-
-    elif options.s_name == 'bing':
+    elif options.s_name == 'search':
         query = options.query
         inst_c = Cmd(query, engine=options.s_name, pprint_json=options.json, pprint_xml=options.xml,
                      colours=not options.disable_colours,
